@@ -1,8 +1,14 @@
 # config valid only for Capistrano 3.1
 lock '3.1.0'
 
-set :application, 'my_app_name'
-set :repo_url, 'git@example.com:me/my_repo.git'
+set :application, 'captest'
+set :repo_url, 'git@github.com:aisensiy/captest.git'
+
+set :rbenv_type, :user
+set :rbenv_ruby, '2.0.0-p451'
+set :rbenv_prefix, "RBENV_ROOT=#{fetch(:rbenv_path)} RBENV_VERSION=#{fetch(:rbenv_ruby)} #{fetch(:rbenv_path)}/bin/rbenv exec"
+set :rbenv_map_bins, %w{rake gem bundle ruby rails}
+set :rbenv_roles, :all
 
 # Default branch is :master
 # ask :branch, proc { `git rev-parse --abbrev-ref HEAD`.chomp }
@@ -55,4 +61,26 @@ namespace :deploy do
     end
   end
 
+end
+
+desc "Check that i can access everything"
+task :check_write_permission do
+  on roles(:all) do |host|
+    if test("[ -w #{fetch(:deploy_to)} ]")
+      info "#{fetch(:deploy_to)} is writable on #{host}"
+    else
+      error "#{fetch(:deploy_to)} is not writable on #{host}"
+    end
+  end
+end
+
+desc "Check if agent forwarding is working"
+task :forwarding do
+  on roles(:all) do |h|
+    if test("env | grep SSH_AUTH_SOCK")
+      info "Agent forwarding is up to #{h}"
+    else
+      error "Agent forwarding is NOT up to #{h}"
+    end
+  end
 end
